@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Titan Club Dashboard - Admin</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Babel để biên dịch React JSX ngay trên trình duyệt -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Các style tùy chỉnh -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Custom Scrollbar cho giao diện tối */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1e293b; 
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569; 
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #64748b; 
+        }
+
+        /* Animations */
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.4s ease-out forwards;
+        }
+
+        @keyframes slide-in-right {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .animate-slide-in-right {
+            animation: slide-in-right 0.3s ease-out forwards;
+        }
+        
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(168, 85, 247, 0); }
+            100% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(168, 85, 247, 0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-200">
+    <div id="root"></div>
+
+    <!-- Script chính chứa React Code -->
+    <script type="text/babel" data-type="module">
+        import React, { useState, useEffect } from 'https://esm.sh/react@18.2.0';
+        import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client';
+        
+        // Import Icons từ Lucide React
+        import { 
+            BarChart3, Users, Wine, DollarSign, Bell, Menu, Clock, TrendingUp, AlertTriangle,
+            LayoutGrid, Settings, LogOut, Search, GlassWater, ChevronRight, Plus, Filter,
+            FileText, CheckCircle, XCircle, MoreHorizontal, Printer, Split, Merge, Percent,
+            Music, Lightbulb, Calendar, UserPlus, Download, Coffee, CreditCard, Banknote
+        } from 'https://esm.sh/lucide-react@0.263.1';
+
+        // Import Charts từ Recharts
+        import { 
+            LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+            BarChart, Bar, Cell, PieChart, Pie, AreaChart, Area
+        } from 'https://esm.sh/recharts@2.12.0?external=react,react-dom';
+
+        // --- DỮ LIỆU MẪU (MOCK DATA) ---
+
+        const HOURLY_DATA = [
+            { time: '19:00', revenue: 5500000, pax: 12 },
+            { time: '20:00', revenue: 12000000, pax: 35 },
+            { time: '21:00', revenue: 25400000, pax: 68 },
+            { time: '22:00', revenue: 48000000, pax: 110 },
+            { time: '23:00', revenue: 85000000, pax: 142 },
+            { time: '00:00', revenue: 110000000, pax: 135 },
+            { time: '01:00', revenue: 65000000, pax: 80 },
+            { time: '02:00', revenue: 32000000, pax: 45 },
+        ];
+
+        const PAYMENT_METHOD_DATA = [
+            { name: 'Tiền mặt', value: 30, color: '#10b981' },
+            { name: 'Thẻ tín dụng', value: 45, color: '#8b5cf6' },
+            { name: 'Chuyển khoản', value: 25, color: '#3b82f6' },
+        ];
+
+        const CATEGORY_DATA = [
+            { name: 'Rượu mạnh (Bottles)', value: 55, color: '#8b5cf6' },
+            { name: 'Cocktails/Mixers', value: 20, color: '#ec4899' },
+            { name: 'Beer', value: 10, color: '#3b82f6' },
+            { name: 'Shisha/Bóng', value: 15, color: '#10b981' },
+        ];
+
+        const TABLES_GRID = [
+            { id: 'VIP 1', type: 'vip', status: 'occupied', bill: 35500000, pax: 8, time: '2h 15m', orders: ['Macallan 25', 'Fruit Plate Big', 'Shisha Royal', 'Lavie x10'] },
+            { id: 'VIP 2', type: 'vip', status: 'reserved', bill: 0, pax: 0, time: '22:30', orders: [], bookingName: 'Mr. Long' },
+            { id: 'VIP 3', type: 'vip', status: 'occupied', bill: 18000000, pax: 6, time: '1h 30m', orders: ['Grey Goose 3L', 'Mixer Set x2'] },
+            { id: 'VIP 4', type: 'vip', status: 'free', bill: 0, pax: 0, time: '-', orders: [] },
+            { id: 'VIP 5', type: 'vip', status: 'occupied', bill: 42000000, pax: 10, time: '3h 00m', orders: ['Dom Perignon x2', 'Fruit Tower'] },
+            { id: 'S1', type: 'sofa', status: 'free', bill: 0, pax: 0, time: '-', orders: [] },
+            { id: 'S2', type: 'sofa', status: 'occupied', bill: 4500000, pax: 4, time: '45m', orders: ['Beer Tower', 'Snack Combo'] },
+            { id: 'S3', type: 'sofa', status: 'occupied', bill: 8900000, pax: 6, time: '1h 10m', orders: ['Moet Chandon', 'Shisha'] },
+            { id: 'S4', type: 'sofa', status: 'reserved', bill: 0, pax: 0, time: '23:00', orders: [], bookingName: 'Ms. Jenny' },
+            { id: 'S5', type: 'sofa', status: 'free', bill: 0, pax: 0, time: '-', orders: [] },
+            { id: 'S6', type: 'sofa', status: 'occupied', bill: 2100000, pax: 3, time: '20m', orders: ['Cocktail Set'] },
+            { id: 'BAR 1', type: 'bar', status: 'occupied', bill: 650000, pax: 1, time: '30m', orders: ['Negroni', 'Water'] },
+            { id: 'BAR 2', type: 'bar', status: 'free', bill: 0, pax: 0, time: '-', orders: [] },
+            { id: 'BAR 3', type: 'bar', status: 'free', bill: 0, pax: 0, time: '-', orders: [] },
+            { id: 'BAR 4', type: 'bar', status: 'occupied', bill: 1200000, pax: 2, time: '1h', orders: ['Whisky Sour x2', 'Fries'] },
+            { id: 'STD 1', type: 'stand', status: 'free', bill: 0, pax: 0, time: '-', orders: [] },
+            { id: 'STD 2', type: 'stand', status: 'occupied', bill: 5500000, pax: 5, time: '1h 45m', orders: ['Jagermeister Combo'] },
+            { id: 'STD 3', type: 'stand', status: 'free', bill: 0, pax: 0, time: '-', orders: [] },
+            { id: 'STD 4', type: 'stand', status: 'free', bill: 0, pax: 0, time: '-', orders: [] },
+            { id: 'STD 5', type: 'stand', status: 'reserved', bill: 0, pax: 0, time: '00:00', orders: [], bookingName: 'Group Zalo' },
+        ];
+
+        const INVENTORY_DATA = [
+            { id: 1, name: 'Macallan 18Y', category: 'spirits', stock: 2, unit: 'Chai', status: 'critical', price: 8500000 },
+            { id: 2, name: 'Macallan 25Y', category: 'spirits', stock: 1, unit: 'Chai', status: 'critical', price: 32000000 },
+            { id: 3, name: 'Grey Goose Vodka', category: 'spirits', stock: 12, unit: 'Chai', status: 'good', price: 2200000 },
+            { id: 4, name: 'Hendrick\'s Gin', category: 'spirits', stock: 5, unit: 'Chai', status: 'warning', price: 2800000 },
+            { id: 5, name: 'Jagermeister', category: 'spirits', stock: 24, unit: 'Chai', status: 'good', price: 1500000 },
+            { id: 6, name: 'Dom Perignon', category: 'wine', stock: 8, unit: 'Chai', status: 'good', price: 9500000 },
+            { id: 7, name: 'Moet Chandon', category: 'wine', stock: 15, unit: 'Chai', status: 'good', price: 3500000 },
+            { id: 8, name: 'Heineken', category: 'beer', stock: 120, unit: 'Lon', status: 'good', price: 65000 },
+            { id: 9, name: 'Corona', category: 'beer', stock: 45, unit: 'Chai', status: 'warning', price: 85000 },
+            { id: 10, name: 'Coca Cola', category: 'mixer', stock: 150, unit: 'Lon', status: 'good', price: 40000 },
+            { id: 11, name: 'Soda Water', category: 'mixer', stock: 200, unit: 'Lon', status: 'good', price: 40000 },
+            { id: 12, name: 'Redbull', category: 'mixer', stock: 80, unit: 'Lon', status: 'good', price: 50000 },
+            { id: 13, name: 'Shisha Royal', category: 'shisha', stock: 5, unit: 'Hộp', status: 'warning', price: 650000 },
+            { id: 14, name: 'Bóng cười (S)', category: 'shisha', stock: 10, unit: 'Bình', status: 'good', price: 150000 },
+            { id: 15, name: 'Trái cây lớn', category: 'food', stock: 10, unit: 'Set', status: 'good', price: 850000 },
+        ];
+
+        const STAFF_DATA = [
+            { id: 1, name: 'Nguyễn Văn A', role: 'Server', status: 'online', checkIn: '18:30', sales: 45000000, tips: 1200000 },
+            { id: 2, name: 'Trần Thị B', role: 'Server', status: 'online', checkIn: '18:45', sales: 32000000, tips: 850000 },
+            { id: 3, name: 'Lê Văn C', role: 'Bartender', status: 'busy', checkIn: '18:00', sales: 0, tips: 500000 },
+            { id: 4, name: 'Phạm Thị D', role: 'Hostess', status: 'online', checkIn: '19:00', sales: 0, tips: 200000 },
+            { id: 5, name: 'Hoàng Tùng', role: 'DJ', status: 'online', checkIn: '21:00', sales: 0, tips: 0 },
+            { id: 6, name: 'Bảo vệ Mike', role: 'Security', status: 'online', checkIn: '18:00', sales: 0, tips: 0 },
+            { id: 7, name: 'Quản lý Hùng', role: 'Manager', status: 'online', checkIn: '17:00', sales: 0, tips: 0 },
+            { id: 8, name: 'Thu ngân Lan', role: 'Cashier', status: 'busy', checkIn: '18:00', sales: 0, tips: 0 },
+        ];
+
+        const RECENT_TRANSACTIONS = [
+            { id: 'TRX-1002', table: 'VIP 5', amount: 42000000, time: '23:15', method: 'Thẻ tín dụng', status: 'completed' },
+            { id: 'TRX-1001', table: 'S2', amount: 4500000, time: '23:10', method: 'Tiền mặt', status: 'completed' },
+            { id: 'TRX-1000', table: 'BAR 1', amount: 650000, time: '23:05', method: 'QR Code', status: 'completed' },
+            { id: 'TRX-0999', table: 'S6', amount: 2100000, time: '22:55', method: 'Tiền mặt', status: 'completed' },
+            { id: 'TRX-0998', table: 'VIP 3', amount: 18000000, time: '22:40', method: 'Chuyển khoản', status: 'completed' },
+        ];
+
+        const NOTIFICATIONS = [
+            { id: 1, title: 'Yêu cầu hủy món', msg: 'Bàn VIP 1 muốn trả lại 1 Shisha', time: '2m', type: 'alert' },
+            { id: 2, title: 'Kho cảnh báo', msg: 'Macallan 25Y chỉ còn 1 chai', time: '15m', type: 'warning' },
+            { id: 3, title: 'Booking mới', msg: 'Khách VIP Long vừa đặt bàn VIP 2', time: '30m', type: 'info' },
+            { id: 4, title: 'Nhân sự', msg: 'DJ Hoàng Tùng đã check-in', time: '1h', type: 'success' },
+        ];
+
+        // --- COMPONENTS ---
+
+        const Card = ({ children, className = '' }) => (
+            <div className={`bg-slate-800 border border-slate-700 rounded-xl p-5 shadow-lg ${className}`}>
+                {children}
+            </div>
+        );
+
+        const Badge = ({ type, text }) => {
+            const styles = {
+                critical: 'bg-red-500/20 text-red-400 border-red-500/50',
+                warning: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50',
+                good: 'bg-green-500/20 text-green-400 border-green-500/50',
+                info: 'bg-blue-500/20 text-blue-400 border-blue-500/50',
+                occupied: 'bg-red-500/20 text-red-400 border-red-500/50',
+                reserved: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50',
+                free: 'bg-slate-700 text-slate-400 border-slate-600',
+                online: 'bg-green-500/20 text-green-400',
+                busy: 'bg-orange-500/20 text-orange-400',
+                offline: 'bg-slate-700 text-slate-500',
+                vip: 'bg-purple-500/20 text-purple-400 border-purple-500/50',
+            };
+            return (
+                <span className={`px-2 py-0.5 rounded text-xs font-medium border border-transparent whitespace-nowrap ${styles[type] || styles.info}`}>
+                    {text}
+                </span>
+            );
+        };
+
+        const Toast = ({ message, show, onClose }) => {
+            if (!show) return null;
+            return (
+                <div className="fixed bottom-6 right-6 bg-slate-800 border-l-4 border-purple-500 text-white p-4 rounded shadow-2xl z-50 animate-slide-in flex items-center gap-3">
+                    <CheckCircle size={20} className="text-purple-400" />
+                    <div>
+                        <h4 className="font-bold text-sm">Thành công</h4>
+                        <p className="text-xs text-slate-300">{message}</p>
+                    </div>
+                    <button onClick={onClose} className="ml-4 hover:text-white text-slate-500"><XCircle size={16}/></button>
+                </div>
+            );
+        };
+
+        // --- SUB-VIEWS ---
+
+        const DashboardView = ({ formatCurrency, setGlobalToast }) => (
+            <div className="space-y-6 animate-fade-in">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg relative overflow-hidden group hover:border-purple-500/30 transition-all">
+                        <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><DollarSign size={60} /></div>
+                        <p className="text-slate-400 text-sm font-medium mb-1">Doanh thu Live</p>
+                        <h3 className="text-2xl font-bold text-white mb-1">154.320.000 ₫</h3>
+                        <p className="text-xs text-green-400 flex items-center gap-1"><TrendingUp size={14}/> +12% hôm qua</p>
+                    </div>
+                    <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg relative overflow-hidden group hover:border-purple-500/30 transition-all">
+                        <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><Users size={60} /></div>
+                        <p className="text-slate-400 text-sm font-medium mb-1">Khách đang có mặt</p>
+                        <h3 className="text-2xl font-bold text-white mb-1">142 Pax</h3>
+                        <p className="text-xs text-green-400 flex items-center gap-1"><TrendingUp size={14}/> 85% Sức chứa</p>
+                    </div>
+                    <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg relative overflow-hidden group hover:border-purple-500/30 transition-all">
+                        <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><BarChart3 size={60} /></div>
+                        <p className="text-slate-400 text-sm font-medium mb-1">Chi tiêu TB / Khách</p>
+                        <h3 className="text-2xl font-bold text-white mb-1">1.080.000 ₫</h3>
+                        <p className="text-xs text-red-400 flex items-center gap-1"><AlertTriangle size={14}/> Thấp hơn mục tiêu</p>
+                    </div>
+                    <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg relative overflow-hidden group hover:border-purple-500/30 transition-all">
+                        <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><Wine size={60} /></div>
+                        <p className="text-slate-400 text-sm font-medium mb-1">Tip Jar (Tổng)</p>
+                        <h3 className="text-2xl font-bold text-white mb-1">2.750.000 ₫</h3>
+                        <p className="text-xs text-green-400 flex items-center gap-1"><CheckCircle size={14}/> 8 nhân viên</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <Card className="lg:col-span-2">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-bold text-white">Xu hướng Doanh thu & Khách (Real-time)</h3>
+                            <div className="flex gap-2">
+                                <button className="px-3 py-1 text-xs font-medium bg-purple-600 text-white rounded-lg">Live</button>
+                                <button className="px-3 py-1 text-xs font-medium bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600">Hôm qua</button>
+                            </div>
+                        </div>
+                        <div className="h-[300px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={HOURLY_DATA}>
+                                    <defs>
+                                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4}/>
+                                            <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                                    <XAxis dataKey="time" stroke="#94a3b8" tickLine={false} axisLine={false} />
+                                    <YAxis yAxisId="left" stroke="#94a3b8" tickLine={false} axisLine={false} tickFormatter={(val) => `${val/1000000}M`} />
+                                    <YAxis yAxisId="right" orientation="right" stroke="#ec4899" tickLine={false} axisLine={false} />
+                                    <Tooltip 
+                                        contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#fff' }}
+                                        formatter={(value, name) => [name === 'revenue' ? formatCurrency(value) : value, name === 'revenue' ? 'Doanh thu' : 'Khách']}
+                                    />
+                                    <Area yAxisId="left" type="monotone" dataKey="revenue" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorRevenue)" />
+                                    <Line yAxisId="right" type="monotone" dataKey="pax" stroke="#ec4899" strokeWidth={2} dot={false} />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </Card>
+
+                    <Card>
+                        <h3 className="text-lg font-bold text-white mb-4">Cơ cấu doanh thu</h3>
+                        <div className="h-[250px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={CATEGORY_DATA}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                    >
+                                        {CATEGORY_DATA.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', borderRadius: '8px' }}/>
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+                        <div className="space-y-3 mt-2">
+                            {CATEGORY_DATA.map((item, index) => (
+                                <div key={index} className="flex justify-between text-sm">
+                                    <span className="text-slate-300 flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full" style={{backgroundColor: item.color}}></span>
+                                        {item.name}
+                                    </span>
+                                    <span className="font-bold text-white">{item.value}%</span>
+                                </div>
+                            ))}
+                        </div>
+                        <button onClick={() => setGlobalToast("Đang tải báo cáo chi tiết...")} className="w-full mt-4 py-2 border border-slate-600 rounded-lg text-sm text-slate-300 hover:bg-slate-700 transition-colors flex items-center justify-center gap-2">
+                            <Download size={14}/> Xuất báo cáo
+                        </button>
+                    </Card>
+                </div>
+            </div>
+        );
+
+        const TablesView = ({ formatCurrency, setGlobalToast }) => {
+            const [selectedTable, setSelectedTable] = useState(null);
+            const [filter, setFilter] = useState('all');
+            const [showBookingModal, setShowBookingModal] = useState(false);
+
+            const filteredTables = TABLES_GRID.filter(t => {
+                if (filter === 'all') return true;
+                if (filter === 'vip') return t.type === 'vip';
+                return t.status === filter;
+            });
+
+            const handleAction = (action, tableId) => {
+                setGlobalToast(`${action} cho bàn ${tableId} thành công!`);
+            };
+
+            return (
+                <div className="space-y-6 animate-fade-in relative">
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div>
+                            <h2 className="text-xl font-bold text-white">Sơ đồ bàn (Live Map)</h2>
+                            <div className="flex gap-2 mt-2">
+                                {['all', 'vip', 'occupied', 'reserved', 'free'].map(f => (
+                                    <button 
+                                        key={f}
+                                        onClick={() => setFilter(f)}
+                                        className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors capitalize
+                                            ${filter === f 
+                                                ? 'bg-purple-600 border-purple-600 text-white' 
+                                                : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'}`}
+                                    >
+                                        {f === 'all' ? 'Tất cả' : f}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="flex gap-3">
+                            <button 
+                                onClick={() => setShowBookingModal(true)}
+                                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-lg shadow-purple-900/20"
+                            >
+                                <Calendar size={16} /> Đặt bàn mới
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-220px)]">
+                        <div className="lg:col-span-2 bg-slate-800/50 rounded-xl p-6 border border-slate-800 overflow-y-auto custom-scrollbar">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
+                                {filteredTables.map((table) => (
+                                    <button
+                                        key={table.id}
+                                        onClick={() => setSelectedTable(table)}
+                                        className={`relative p-3 rounded-xl border-2 transition-all duration-200 flex flex-col items-center justify-between gap-1 h-28 group
+                                            ${selectedTable?.id === table.id ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-slate-900' : ''}
+                                            ${table.status === 'occupied' 
+                                                ? 'bg-red-500/10 border-red-500/30 hover:bg-red-500/20' 
+                                                : table.status === 'reserved' 
+                                                    ? 'bg-yellow-500/10 border-yellow-500/30 hover:bg-yellow-500/20' 
+                                                    : 'bg-slate-700/30 border-slate-600/30 hover:bg-slate-700/50'
+                                            }`}
+                                    >
+                                        <div className="w-full flex justify-between items-start">
+                                            <span className={`font-bold text-sm ${
+                                                table.status === 'occupied' ? 'text-red-400' : 
+                                                table.status === 'reserved' ? 'text-yellow-400' : 'text-slate-400'
+                                            }`}>
+                                                {table.id}
+                                            </span>
+                                            {table.type === 'vip' && <span className="text-[10px] bg-purple-500 text-white px-1 rounded">VIP</span>}
+                                        </div>
+
+                                        {table.status === 'occupied' ? (
+                                            <div className="text-center">
+                                                <span className="text-xs font-bold text-white block">{formatCurrency(table.bill).split('₫')[0]}</span>
+                                                <span className="text-[10px] text-slate-400">{table.pax} Pax • {table.time}</span>
+                                            </div>
+                                        ) : table.status === 'reserved' ? (
+                                            <div className="text-center">
+                                                <Clock size={14} className="text-yellow-500 mx-auto mb-1"/>
+                                                <span className="text-[10px] text-yellow-500">{table.time}</span>
+                                                <span className="text-[10px] text-slate-400 block truncate w-16">{table.bookingName}</span>
+                                            </div>
+                                        ) : (
+                                            <span className="text-slate-600 text-xs">Trống</span>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 flex flex-col h-full animate-slide-in-right">
+                            {selectedTable ? (
+                                <>
+                                    <div className="flex justify-between items-start mb-4 pb-4 border-b border-slate-700">
+                                        <div>
+                                            <h3 className="text-2xl font-bold text-white mb-1">Bàn {selectedTable.id}</h3>
+                                            <div className="flex gap-2">
+                                                <Badge 
+                                                    type={selectedTable.status} 
+                                                    text={selectedTable.status === 'occupied' ? 'Đang phục vụ' : selectedTable.status === 'reserved' ? 'Đã đặt' : 'Bàn trống'} 
+                                                />
+                                                {selectedTable.type === 'vip' && <Badge type="vip" text="Khu vực VIP" />}
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-sm text-slate-400">Vào lúc</p>
+                                            <p className="text-lg font-mono text-white">{selectedTable.status === 'occupied' ? '21:30' : '-'}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <h4 className="text-sm font-bold text-slate-400 uppercase">Order Details</h4>
+                                            <button className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1">
+                                                <Plus size={12}/> Thêm
+                                            </button>
+                                        </div>
+                                        
+                                        {selectedTable.orders.length > 0 ? (
+                                            <div className="space-y-2">
+                                                {selectedTable.orders.map((item, i) => (
+                                                    <div key={i} className="flex justify-between items-center bg-slate-900/50 p-2 rounded-lg text-sm border border-slate-800">
+                                                        <span className="text-slate-200">{item}</span>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-xs text-slate-500">x1</span>
+                                                            <span className="text-slate-300 font-medium">150k</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                <div className="border-t border-dashed border-slate-700 my-2"></div>
+                                                <div className="flex justify-between text-sm text-slate-400">
+                                                    <span>Thuế & Phí (10%)</span>
+                                                    <span>{formatCurrency(selectedTable.bill * 0.1)}</span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="h-32 flex items-center justify-center border-2 border-dashed border-slate-700 rounded-lg">
+                                                <p className="text-slate-500 text-sm italic">Chưa có order nào.</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="mt-4 pt-4 border-t border-slate-700 space-y-3">
+                                        <div className="flex justify-between items-center text-xl font-bold text-white">
+                                            <span>Tổng cộng:</span>
+                                            <span className="text-purple-400">{formatCurrency(selectedTable.bill * 1.1)}</span>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-4 gap-2">
+                                            <button onClick={() => handleAction('In Bill', selectedTable.id)} className="col-span-1 bg-slate-700 hover:bg-slate-600 text-slate-300 p-2 rounded-lg flex flex-col items-center justify-center gap-1 text-[10px] transition-colors">
+                                                <Printer size={16} /> In Bill
+                                            </button>
+                                            <button onClick={() => handleAction('Tách Bill', selectedTable.id)} className="col-span-1 bg-slate-700 hover:bg-slate-600 text-slate-300 p-2 rounded-lg flex flex-col items-center justify-center gap-1 text-[10px] transition-colors">
+                                                <Split size={16} /> Tách
+                                            </button>
+                                            <button onClick={() => handleAction('Gộp Bàn', selectedTable.id)} className="col-span-1 bg-slate-700 hover:bg-slate-600 text-slate-300 p-2 rounded-lg flex flex-col items-center justify-center gap-1 text-[10px] transition-colors">
+                                                <Merge size={16} /> Gộp
+                                            </button>
+                                            <button onClick={() => handleAction('Giảm giá', selectedTable.id)} className="col-span-1 bg-slate-700 hover:bg-slate-600 text-slate-300 p-2 rounded-lg flex flex-col items-center justify-center gap-1 text-[10px] transition-colors">
+                                                <Percent size={16} /> Giảm
+                                            </button>
+                                        </div>
+                                        <button onClick={() => handleAction('Thanh toán', selectedTable.id)} className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold py-3 rounded-lg shadow-lg shadow-purple-900/30 transition-all active:scale-95 flex items-center justify-center gap-2">
+                                            <CreditCard size={18}/> THANH TOÁN
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="h-full flex flex-col items-center justify-center text-slate-500">
+                                    <div className="w-16 h-16 bg-slate-700/50 rounded-full flex items-center justify-center mb-4 animate-pulse">
+                                        <LayoutGrid size={32} className="opacity-50"/>
+                                    </div>
+                                    <p>Chọn một bàn để xem chi tiết</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {showBookingModal && (
+                        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+                            <div className="bg-slate-800 border border-slate-600 rounded-xl p-6 w-full max-w-md shadow-2xl">
+                                <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2"><Calendar className="text-purple-400"/> Đặt bàn mới</h3>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="text-xs text-slate-400 block mb-1">Tên khách hàng</label>
+                                        <input type="text" className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-purple-500 outline-none" placeholder="Nhập tên khách..." />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-xs text-slate-400 block mb-1">Số điện thoại</label>
+                                            <input type="text" className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none" placeholder="090..." />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-slate-400 block mb-1">Số khách</label>
+                                            <input type="number" className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none" defaultValue={4} />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-slate-400 block mb-1">Chọn bàn</label>
+                                        <select className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none">
+                                            <option>VIP 2 (Trống)</option>
+                                            <option>S4 (Trống)</option>
+                                            <option>STD 3 (Trống)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-slate-400 block mb-1">Ghi chú</label>
+                                        <textarea className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none h-20" placeholder="Sinh nhật, cần trang trí..."></textarea>
+                                    </div>
+                                </div>
+                                <div className="flex gap-3 mt-6">
+                                    <button onClick={() => setShowBookingModal(false)} className="flex-1 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 font-medium">Hủy</button>
+                                    <button onClick={() => {setShowBookingModal(false); setGlobalToast("Đặt bàn thành công!");}} className="flex-1 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium shadow-lg shadow-purple-900/20">Xác nhận</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const InventoryView = ({ formatCurrency, setGlobalToast }) => {
+            const [catFilter, setCatFilter] = useState('all');
+
+            const filteredInv = INVENTORY_DATA.filter(i => catFilter === 'all' ? true : i.category === catFilter);
+
+            return (
+                <div className="space-y-6 animate-fade-in">
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div>
+                            <h2 className="text-xl font-bold text-white">Quản lý Kho & Menu</h2>
+                            <div className="flex gap-2 mt-2">
+                                {[
+                                    {id: 'all', label: 'Tất cả'},
+                                    {id: 'spirits', label: 'Rượu mạnh'},
+                                    {id: 'wine', label: 'Vang/Champagne'},
+                                    {id: 'beer', label: 'Bia'},
+                                    {id: 'mixer', label: 'Soft Drink'},
+                                    {id: 'shisha', label: 'Shisha'}
+                                ].map(c => (
+                                    <button 
+                                        key={c.id} 
+                                        onClick={() => setCatFilter(c.id)}
+                                        className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${catFilter === c.id ? 'bg-purple-600 border-purple-600 text-white' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
+                                    >
+                                        {c.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="flex gap-3 w-full md:w-auto">
+                            <div className="relative flex-1 md:flex-none">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                                <input 
+                                    type="text" 
+                                    placeholder="Tìm tên rượu..." 
+                                    className="bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white w-full focus:border-purple-500 outline-none"
+                                />
+                            </div>
+                            <button onClick={() => setGlobalToast("Mở form nhập kho...")} className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap">
+                                <Plus size={16} /> Nhập kho
+                            </button>
+                        </div>
+                    </div>
+
+                    <Card className="overflow-hidden p-0">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead className="bg-slate-900/50 text-slate-400 text-xs uppercase font-bold">
+                                    <tr>
+                                        <th className="p-4">Tên hàng hóa</th>
+                                        <th className="p-4">Danh mục</th>
+                                        <th className="p-4 text-center">Tồn kho</th>
+                                        <th className="p-4">Giá bán</th>
+                                        <th className="p-4">Trạng thái</th>
+                                        <th className="p-4 text-right">Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-700">
+                                    {filteredInv.map((item) => (
+                                        <tr key={item.id} className="hover:bg-slate-700/30 transition-colors group">
+                                            <td className="p-4 font-medium text-white">{item.name}</td>
+                                            <td className="p-4 text-slate-400 text-sm capitalize">{item.category}</td>
+                                            <td className="p-4 text-center">
+                                                <span className={`font-bold ${item.status === 'critical' ? 'text-red-400' : 'text-slate-200'}`}>
+                                                    {item.stock}
+                                                </span>
+                                                <span className="text-slate-500 text-xs ml-1">{item.unit}</span>
+                                            </td>
+                                            <td className="p-4 text-slate-200">{formatCurrency(item.price)}</td>
+                                            <td className="p-4">
+                                                <Badge 
+                                                    type={item.status} 
+                                                    text={item.status === 'critical' ? 'Sắp hết' : item.status === 'warning' ? 'Cần nhập' : 'Sẵn sàng'} 
+                                                />
+                                            </td>
+                                            <td className="p-4 text-right">
+                                                <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    {item.status !== 'good' && (
+                                                        <button onClick={() => setGlobalToast(`Đã gửi yêu cầu nhập ${item.name}`)} className="p-1 bg-purple-600 text-white rounded hover:bg-purple-500 text-xs px-2">Nhập</button>
+                                                    )}
+                                                    <button className="text-slate-400 hover:text-white p-1">
+                                                        <MoreHorizontal size={18} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </Card>
+                </div>
+            );
+        };
+
+        const StaffView = ({ formatCurrency, setGlobalToast }) => {
+            const [viewMode, setViewMode] = useState('list');
+
+            return (
+                <div className="space-y-6 animate-fade-in">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-xl font-bold text-white">Quản lý Nhân sự</h2>
+                        <div className="bg-slate-800 p-1 rounded-lg flex border border-slate-700">
+                            <button 
+                                onClick={() => setViewMode('list')}
+                                className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${viewMode === 'list' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                            >
+                                Danh sách Live
+                            </button>
+                            <button 
+                                onClick={() => setViewMode('schedule')}
+                                className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${viewMode === 'schedule' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                            >
+                                Lịch làm việc
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <Card className="bg-gradient-to-br from-purple-900/50 to-slate-800 border-purple-500/30">
+                            <h3 className="text-slate-400 text-sm font-medium mb-1">Tổng nhân sự (Ca đêm)</h3>
+                            <p className="text-3xl font-bold text-white">8 <span className="text-sm font-normal text-slate-400">/ 12</span></p>
+                        </Card>
+                        <Card>
+                            <h3 className="text-slate-400 text-sm font-medium mb-1">Tổng tiền Tip (Hôm nay)</h3>
+                            <p className="text-3xl font-bold text-green-400">2.750.000 ₫</p>
+                        </Card>
+                        <Card>
+                            <h3 className="text-slate-400 text-sm font-medium mb-1">Top Sales Server</h3>
+                            <p className="text-xl font-bold text-white">Nguyễn Văn A</p>
+                            <p className="text-sm text-purple-400">45.000.000 ₫</p>
+                        </Card>
+                    </div>
+
+                    {viewMode === 'list' ? (
+                        <Card className="p-0 overflow-hidden">
+                            <table className="w-full text-left">
+                                <thead className="bg-slate-900/50 text-slate-400 text-xs uppercase font-bold">
+                                    <tr>
+                                        <th className="p-4">Nhân viên</th>
+                                        <th className="p-4">Vai trò</th>
+                                        <th className="p-4">Check-in</th>
+                                        <th className="p-4">Trạng thái</th>
+                                        <th className="p-4 text-right">Doanh số</th>
+                                        <th className="p-4 text-right">Tip Riêng</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-700">
+                                    {STAFF_DATA.map((staff) => (
+                                        <tr key={staff.id} className="hover:bg-slate-700/30">
+                                            <td className="p-4 font-medium text-white flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300">
+                                                    {staff.name.charAt(0)}
+                                                </div>
+                                                {staff.name}
+                                            </td>
+                                            <td className="p-4 text-slate-400 text-sm">{staff.role}</td>
+                                            <td className="p-4 text-slate-300 font-mono text-sm">{staff.checkIn}</td>
+                                            <td className="p-4">
+                                                <Badge 
+                                                    type={staff.status} 
+                                                    text={staff.status === 'online' ? 'Đang làm' : staff.status === 'busy' ? 'Đang bận' : 'Đã về'} 
+                                                />
+                                            </td>
+                                            <td className="p-4 text-right font-bold text-purple-400">
+                                                {formatCurrency(staff.sales)}
+                                            </td>
+                                            <td className="p-4 text-right font-medium text-green-400">
+                                                {formatCurrency(staff.tips)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </Card>
+                    ) : (
+                        <Card className="flex flex-col items-center justify-center py-12 text-center border-dashed">
+                            <Calendar size={48} className="text-slate-600 mb-4"/>
+                            <h3 className="text-lg font-bold text-white">Lịch làm việc tuần này</h3>
+                            <p className="text-slate-400 text-sm mb-4">Chức năng đang được cập nhật...</p>
+                            <button className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm text-white">Xem bản PDF</button>
+                        </Card>
+                    )}
+                </div>
+            );
+        };
+
+        const FinanceView = ({ formatCurrency }) => (
+            <div className="space-y-6 animate-fade-in">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <Card>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-bold text-white">Giao dịch gần nhất</h3>
+                            <button className="text-xs text-purple-400">Xem tất cả</button>
+                        </div>
+                        <div className="space-y-3">
+                            {RECENT_TRANSACTIONS.map((trx) => (
+                                <div key={trx.id} className="flex justify-between items-center p-3 bg-slate-900/50 rounded-lg border border-slate-700/30">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${trx.amount > 10000000 ? 'bg-purple-500/10 text-purple-500' : 'bg-green-500/10 text-green-500'}`}>
+                                            {trx.amount > 10000000 ? <Wine size={20}/> : <Banknote size={20} />}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-white text-sm">{trx.table}</p>
+                                            <p className="text-xs text-slate-500">{trx.id} • {trx.time}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="font-bold text-white text-sm">+{formatCurrency(trx.amount)}</p>
+                                        <p className="text-xs text-slate-400">{trx.method}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </Card>
+                    
+                    <Card>
+                        <h3 className="font-bold text-white mb-4">Phương thức thanh toán</h3>
+                        <div className="h-[200px] flex items-center justify-center">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={PAYMENT_METHOD_DATA}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={50}
+                                        outerRadius={70}
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                    >
+                                        {PAYMENT_METHOD_DATA.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', borderRadius: '8px' }}/>
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+                        <div className="flex justify-center gap-4 mt-2">
+                            {PAYMENT_METHOD_DATA.map((item, i) => (
+                                <div key={i} className="flex items-center gap-2 text-xs text-slate-300">
+                                    <span className="w-2 h-2 rounded-full" style={{backgroundColor: item.color}}></span>
+                                    {item.name} ({item.value}%)
+                                </div>
+                            ))}
+                        </div>
+                    </Card>
+                </div>
+                
+                <div className="grid grid-cols-1 gap-6">
+                    <Card className="flex flex-col justify-center items-center text-center p-8 bg-gradient-to-r from-slate-800 to-slate-900 border-none">
+                        <div className="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center mb-4 text-slate-400">
+                            <FileText size={32} />
+                        </div>
+                        <h3 className="text-xl font-bold text-white mb-2">Báo cáo P&L (Profit & Loss)</h3>
+                        <p className="text-slate-400 text-sm mb-6 max-w-lg">Tổng hợp chi phí COGS, Nhân sự, Thuê mặt bằng và Lợi nhuận ròng tháng này.</p>
+                        <div className="flex gap-4">
+                            <button className="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors flex items-center gap-2">
+                                <Coffee size={16}/> Xem sơ bộ
+                            </button>
+                            <button className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 shadow-lg shadow-purple-900/20">
+                                <Download size={16}/> Tải PDF Full
+                            </button>
+                        </div>
+                    </Card>
+                </div>
+            </div>
+        );
+
+        function TitanClubDashboard() {
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [currentTime, setCurrentTime] = useState(new Date());
+            const [showNotifications, setShowNotifications] = useState(false);
+            const [showUserMenu, setShowUserMenu] = useState(false);
+            const [musicVol, setMusicVol] = useState(65);
+            const [lightLevel, setLightLevel] = useState(40);
+            const [toastMsg, setToastMsg] = useState('');
+
+            useEffect(() => {
+                if (toastMsg) {
+                    const timer = setTimeout(() => setToastMsg(''), 3000);
+                    return () => clearTimeout(timer);
+                }
+            }, [toastMsg]);
+
+            useEffect(() => {
+                const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+                return () => clearInterval(timer);
+            }, []);
+
+            const formatCurrency = (amount) => {
+                return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+            };
+
+            const renderContent = () => {
+                switch (activeTab) {
+                    case 'dashboard': return <DashboardView formatCurrency={formatCurrency} setGlobalToast={setToastMsg} />;
+                    case 'tables': return <TablesView formatCurrency={formatCurrency} setGlobalToast={setToastMsg} />;
+                    case 'inventory': return <InventoryView formatCurrency={formatCurrency} setGlobalToast={setToastMsg} />;
+                    case 'staff': return <StaffView formatCurrency={formatCurrency} setGlobalToast={setToastMsg} />;
+                    case 'finance': return <FinanceView formatCurrency={formatCurrency} />;
+                    default: return <DashboardView formatCurrency={formatCurrency} setGlobalToast={setToastMsg} />;
+                }
+            };
+
+            return (
+                <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-purple-500 selection:text-white flex flex-col md:flex-row">
+                    <Toast message={toastMsg} show={!!toastMsg} onClose={() => setToastMsg('')} />
+
+                    <aside className="fixed left-0 top-0 h-full w-64 bg-slate-900 border-r border-slate-800 z-30 hidden md:flex flex-col shadow-2xl">
+                        <div className="p-6 flex items-center gap-3">
+                            <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-purple-900/20">
+                                <GlassWater className="text-white" size={24} />
+                            </div>
+                            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 tracking-wider">
+                                TITAN CLUB
+                            </span>
+                        </div>
+
+                        <nav className="flex-1 px-4 space-y-2 mt-4">
+                            {[
+                                { id: 'dashboard', label: 'Tổng quan', icon: LayoutGrid },
+                                { id: 'tables', label: 'Quản lý Bàn', icon: Users },
+                                { id: 'inventory', label: 'Kho & Menu', icon: Wine },
+                                { id: 'finance', label: 'Tài chính', icon: DollarSign },
+                                { id: 'staff', label: 'Nhân sự', icon: UserPlus },
+                            ].map((item) => (
+                                <button
+                                    key={item.id}
+                                    onClick={() => setActiveTab(item.id)}
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
+                                        activeTab === item.id 
+                                            ? 'bg-purple-600/20 text-purple-400 border border-purple-600/30' 
+                                            : 'hover:bg-slate-800 text-slate-400 hover:text-white'
+                                    }`}
+                                >
+                                    <item.icon size={20} className={`transition-transform duration-200 ${activeTab === item.id ? 'scale-110' : 'group-hover:scale-110'}`} />
+                                    <span className="font-medium">{item.label}</span>
+                                    {activeTab === item.id && <ChevronRight size={16} className="ml-auto opacity-50" />}
+                                </button>
+                            ))}
+                        </nav>
+
+                        <div className="p-4 mx-4 mb-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p className="text-xs font-bold text-slate-500 uppercase mb-3 flex items-center gap-2"><Settings size={12}/> Vibe Control</p>
+                            <div className="space-y-4">
+                                <div>
+                                    <div className="flex justify-between text-xs mb-1 text-slate-400">
+                                        <span className="flex items-center gap-1"><Music size={12}/> Music</span>
+                                        <span>{musicVol}%</span>
+                                    </div>
+                                    <input type="range" min="0" max="100" value={musicVol} onChange={(e)=>setMusicVol(e.target.value)} className="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500" />
+                                </div>
+                                <div>
+                                    <div className="flex justify-between text-xs mb-1 text-slate-400">
+                                        <span className="flex items-center gap-1"><Lightbulb size={12}/> Lights</span>
+                                        <span>{lightLevel}%</span>
+                                    </div>
+                                    <input type="range" min="0" max="100" value={lightLevel} onChange={(e)=>setLightLevel(e.target.value)} className="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-4 border-t border-slate-800">
+                            <div className="relative">
+                                <button onClick={() => setShowUserMenu(!showUserMenu)} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 cursor-pointer transition-colors group">
+                                    <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center border border-slate-600 group-hover:border-slate-500">
+                                        <span className="text-sm font-bold">AD</span>
+                                    </div>
+                                    <div className="flex-1 text-left">
+                                        <p className="text-sm font-medium text-white">Admin Boss</p>
+                                        <p className="text-xs text-slate-500">Chủ sở hữu</p>
+                                    </div>
+                                    <ChevronRight size={16} className={`text-slate-500 transition-transform ${showUserMenu ? '-rotate-90' : ''}`} />
+                                </button>
+                                
+                                {showUserMenu && (
+                                    <div className="absolute bottom-full left-0 w-full mb-2 bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-hidden animate-fade-in z-50">
+                                        <button className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white">Hồ sơ</button>
+                                        <button className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white">Cài đặt</button>
+                                        <div className="border-t border-slate-700"></div>
+                                        <button className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-slate-700 flex items-center gap-2"><LogOut size={14}/> Đăng xuất</button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </aside>
+
+                    <main className="md:ml-64 flex-1 min-h-screen flex flex-col relative">
+                        <header className="sticky top-0 z-20 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 px-6 py-4 flex justify-between items-center">
+                            <div className="flex items-center gap-4">
+                                <button className="md:hidden p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors">
+                                    <Menu size={24} />
+                                </button>
+                                <div>
+                                    <h1 className="text-2xl font-bold text-white tracking-tight">
+                                        {activeTab === 'dashboard' && 'Dashboard Tổng Quan'}
+                                        {activeTab === 'tables' && 'Quản lý Bàn & Booking'}
+                                        {activeTab === 'inventory' && 'Kho & Hàng Hóa'}
+                                        {activeTab === 'finance' && 'Báo Cáo Tài Chính'}
+                                        {activeTab === 'staff' && 'Quản Lý Nhân Sự'}
+                                    </h1>
+                                    <p className="text-sm text-slate-400 flex items-center gap-2">
+                                        <Clock size={14} className="text-purple-400" />
+                                        {currentTime.toLocaleTimeString('vi-VN')} • {currentTime.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                                <div className="relative hidden lg:block group">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors" size={18} />
+                                    <input 
+                                        type="text" 
+                                        placeholder="Tìm bàn, món, nhân viên..." 
+                                        className="bg-slate-900 border border-slate-700 rounded-full pl-10 pr-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500 w-64 transition-all focus:w-80 shadow-inner"
+                                    />
+                                </div>
+                                
+                                <div className="relative">
+                                    <button 
+                                        onClick={() => setShowNotifications(!showNotifications)}
+                                        className={`relative p-2 rounded-full transition-colors ${showNotifications ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
+                                    >
+                                        <Bell size={24} />
+                                        <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-slate-950 animate-pulse"></span>
+                                    </button>
+                                    
+                                    {showNotifications && (
+                                        <div className="absolute right-0 top-full mt-2 w-80 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl overflow-hidden z-50 animate-fade-in origin-top-right">
+                                            <div className="p-3 border-b border-slate-700 flex justify-between items-center">
+                                                <h4 className="font-bold text-white text-sm">Thông báo</h4>
+                                                <button className="text-xs text-purple-400 hover:text-purple-300">Đọc tất cả</button>
+                                            </div>
+                                            <div className="max-h-80 overflow-y-auto">
+                                                {NOTIFICATIONS.map(notif => (
+                                                    <div key={notif.id} className="p-3 border-b border-slate-700/50 hover:bg-slate-700/30 cursor-pointer flex gap-3">
+                                                        <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${notif.type === 'alert' ? 'bg-red-500' : notif.type === 'warning' ? 'bg-yellow-500' : notif.type === 'success' ? 'bg-green-500' : 'bg-blue-500'}`}></div>
+                                                        <div>
+                                                            <p className="text-sm font-medium text-slate-200">{notif.title}</p>
+                                                            <p className="text-xs text-slate-400">{notif.msg}</p>
+                                                            <p className="text-[10px] text-slate-500 mt-1">{notif.time} trước</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </header>
+
+                        <div className="flex-1 p-6 overflow-x-hidden">
+                            {renderContent()}
+                        </div>
+                    </main>
+                </div>
+            );
+        }
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<TitanClubDashboard />);
+    </script>
+</body>
+</html>
