@@ -1,4 +1,4 @@
-\<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -351,7 +351,7 @@
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                         <div>
                             <h2 className="text-xl font-bold text-white">Sơ đồ bàn (Live Map)</h2>
-                            <div className="flex gap-2 mt-2">
+                            <div className="flex gap-2 mt-2 flex-wrap">
                                 {['all', 'vip', 'occupied', 'reserved', 'free'].map(f => (
                                     <button 
                                         key={f}
@@ -366,17 +366,17 @@
                                 ))}
                             </div>
                         </div>
-                        <div className="flex gap-3">
+                        <div className="flex gap-3 w-full md:w-auto">
                             <button 
                                 onClick={() => setShowBookingModal(true)}
-                                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-lg shadow-purple-900/20"
+                                className="w-full md:w-auto flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-lg shadow-purple-900/20"
                             >
                                 <Calendar size={16} /> Đặt bàn mới
                             </button>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-220px)]">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-220px)] overflow-hidden">
                         <div className="lg:col-span-2 bg-slate-800/50 rounded-xl p-6 border border-slate-800 overflow-y-auto custom-scrollbar">
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
                                 {filteredTables.map((table) => (
@@ -421,91 +421,98 @@
                             </div>
                         </div>
 
-                        <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 flex flex-col h-full animate-slide-in-right">
-                            {selectedTable ? (
-                                <>
-                                    <div className="flex justify-between items-start mb-4 pb-4 border-b border-slate-700">
-                                        <div>
-                                            <h3 className="text-2xl font-bold text-white mb-1">Bàn {selectedTable.id}</h3>
-                                            <div className="flex gap-2">
-                                                <Badge 
-                                                    type={selectedTable.status} 
-                                                    text={selectedTable.status === 'occupied' ? 'Đang phục vụ' : selectedTable.status === 'reserved' ? 'Đã đặt' : 'Bàn trống'} 
-                                                />
-                                                {selectedTable.type === 'vip' && <Badge type="vip" text="Khu vực VIP" />}
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-sm text-slate-400">Vào lúc</p>
-                                            <p className="text-lg font-mono text-white">{selectedTable.status === 'occupied' ? '21:30' : '-'}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <h4 className="text-sm font-bold text-slate-400 uppercase">Order Details</h4>
-                                            <button className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1">
-                                                <Plus size={12}/> Thêm
-                                            </button>
-                                        </div>
-                                        
-                                        {selectedTable.orders.length > 0 ? (
-                                            <div className="space-y-2">
-                                                {selectedTable.orders.map((item, i) => (
-                                                    <div key={i} className="flex justify-between items-center bg-slate-900/50 p-2 rounded-lg text-sm border border-slate-800">
-                                                        <span className="text-slate-200">{item}</span>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-xs text-slate-500">x1</span>
-                                                            <span className="text-slate-300 font-medium">150k</span>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                                <div className="border-t border-dashed border-slate-700 my-2"></div>
-                                                <div className="flex justify-between text-sm text-slate-400">
-                                                    <span>Thuế & Phí (10%)</span>
-                                                    <span>{formatCurrency(selectedTable.bill * 0.1)}</span>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="h-32 flex items-center justify-center border-2 border-dashed border-slate-700 rounded-lg">
-                                                <p className="text-slate-500 text-sm italic">Chưa có order nào.</p>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="mt-4 pt-4 border-t border-slate-700 space-y-3">
-                                        <div className="flex justify-between items-center text-xl font-bold text-white">
-                                            <span>Tổng cộng:</span>
-                                            <span className="text-purple-400">{formatCurrency(selectedTable.bill * 1.1)}</span>
-                                        </div>
-                                        
-                                        <div className="grid grid-cols-4 gap-2">
-                                            <button onClick={() => handleAction('In Bill', selectedTable.id)} className="col-span-1 bg-slate-700 hover:bg-slate-600 text-slate-300 p-2 rounded-lg flex flex-col items-center justify-center gap-1 text-[10px] transition-colors">
-                                                <Printer size={16} /> In Bill
-                                            </button>
-                                            <button onClick={() => handleAction('Tách Bill', selectedTable.id)} className="col-span-1 bg-slate-700 hover:bg-slate-600 text-slate-300 p-2 rounded-lg flex flex-col items-center justify-center gap-1 text-[10px] transition-colors">
-                                                <Split size={16} /> Tách
-                                            </button>
-                                            <button onClick={() => handleAction('Gộp Bàn', selectedTable.id)} className="col-span-1 bg-slate-700 hover:bg-slate-600 text-slate-300 p-2 rounded-lg flex flex-col items-center justify-center gap-1 text-[10px] transition-colors">
-                                                <Merge size={16} /> Gộp
-                                            </button>
-                                            <button onClick={() => handleAction('Giảm giá', selectedTable.id)} className="col-span-1 bg-slate-700 hover:bg-slate-600 text-slate-300 p-2 rounded-lg flex flex-col items-center justify-center gap-1 text-[10px] transition-colors">
-                                                <Percent size={16} /> Giảm
-                                            </button>
-                                        </div>
-                                        <button onClick={() => handleAction('Thanh toán', selectedTable.id)} className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold py-3 rounded-lg shadow-lg shadow-purple-900/30 transition-all active:scale-95 flex items-center justify-center gap-2">
-                                            <CreditCard size={18}/> THANH TOÁN
-                                        </button>
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="h-full flex flex-col items-center justify-center text-slate-500">
-                                    <div className="w-16 h-16 bg-slate-700/50 rounded-full flex items-center justify-center mb-4 animate-pulse">
-                                        <LayoutGrid size={32} className="opacity-50"/>
-                                    </div>
-                                    <p>Chọn một bàn để xem chi tiết</p>
+                        <div className={`${selectedTable ? 'fixed inset-0 z-50 md:static md:inset-auto bg-slate-950 md:bg-transparent' : 'hidden md:block'} md:h-full flex flex-col`}>
+                            {selectedTable && (
+                                <div className="md:hidden p-4 border-b border-slate-800 flex items-center gap-2" onClick={() => setSelectedTable(null)}>
+                                    <ChevronRight className="rotate-180" size={20}/> Quay lại
                                 </div>
                             )}
+                            <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 flex flex-col h-full animate-slide-in-right">
+                                {selectedTable ? (
+                                    <>
+                                        <div className="flex justify-between items-start mb-4 pb-4 border-b border-slate-700">
+                                            <div>
+                                                <h3 className="text-2xl font-bold text-white mb-1">Bàn {selectedTable.id}</h3>
+                                                <div className="flex gap-2">
+                                                    <Badge 
+                                                        type={selectedTable.status} 
+                                                        text={selectedTable.status === 'occupied' ? 'Đang phục vụ' : selectedTable.status === 'reserved' ? 'Đã đặt' : 'Bàn trống'} 
+                                                    />
+                                                    {selectedTable.type === 'vip' && <Badge type="vip" text="Khu vực VIP" />}
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-sm text-slate-400">Vào lúc</p>
+                                                <p className="text-lg font-mono text-white">{selectedTable.status === 'occupied' ? '21:30' : '-'}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <h4 className="text-sm font-bold text-slate-400 uppercase">Order Details</h4>
+                                                <button className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1">
+                                                    <Plus size={12}/> Thêm
+                                                </button>
+                                            </div>
+                                            
+                                            {selectedTable.orders.length > 0 ? (
+                                                <div className="space-y-2">
+                                                    {selectedTable.orders.map((item, i) => (
+                                                        <div key={i} className="flex justify-between items-center bg-slate-900/50 p-2 rounded-lg text-sm border border-slate-800">
+                                                            <span className="text-slate-200">{item}</span>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-xs text-slate-500">x1</span>
+                                                                <span className="text-slate-300 font-medium">150k</span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                    <div className="border-t border-dashed border-slate-700 my-2"></div>
+                                                    <div className="flex justify-between text-sm text-slate-400">
+                                                        <span>Thuế & Phí (10%)</span>
+                                                        <span>{formatCurrency(selectedTable.bill * 0.1)}</span>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="h-32 flex items-center justify-center border-2 border-dashed border-slate-700 rounded-lg">
+                                                    <p className="text-slate-500 text-sm italic">Chưa có order nào.</p>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="mt-4 pt-4 border-t border-slate-700 space-y-3">
+                                            <div className="flex justify-between items-center text-xl font-bold text-white">
+                                                <span>Tổng cộng:</span>
+                                                <span className="text-purple-400">{formatCurrency(selectedTable.bill * 1.1)}</span>
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-4 gap-2">
+                                                <button onClick={() => handleAction('In Bill', selectedTable.id)} className="col-span-1 bg-slate-700 hover:bg-slate-600 text-slate-300 p-2 rounded-lg flex flex-col items-center justify-center gap-1 text-[10px] transition-colors">
+                                                    <Printer size={16} /> In Bill
+                                                </button>
+                                                <button onClick={() => handleAction('Tách Bill', selectedTable.id)} className="col-span-1 bg-slate-700 hover:bg-slate-600 text-slate-300 p-2 rounded-lg flex flex-col items-center justify-center gap-1 text-[10px] transition-colors">
+                                                    <Split size={16} /> Tách
+                                                </button>
+                                                <button onClick={() => handleAction('Gộp Bàn', selectedTable.id)} className="col-span-1 bg-slate-700 hover:bg-slate-600 text-slate-300 p-2 rounded-lg flex flex-col items-center justify-center gap-1 text-[10px] transition-colors">
+                                                    <Merge size={16} /> Gộp
+                                                </button>
+                                                <button onClick={() => handleAction('Giảm giá', selectedTable.id)} className="col-span-1 bg-slate-700 hover:bg-slate-600 text-slate-300 p-2 rounded-lg flex flex-col items-center justify-center gap-1 text-[10px] transition-colors">
+                                                    <Percent size={16} /> Giảm
+                                                </button>
+                                            </div>
+                                            <button onClick={() => handleAction('Thanh toán', selectedTable.id)} className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold py-3 rounded-lg shadow-lg shadow-purple-900/30 transition-all active:scale-95 flex items-center justify-center gap-2">
+                                                <CreditCard size={18}/> THANH TOÁN
+                                            </button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="h-full flex flex-col items-center justify-center text-slate-500">
+                                        <div className="w-16 h-16 bg-slate-700/50 rounded-full flex items-center justify-center mb-4 animate-pulse">
+                                            <LayoutGrid size={32} className="opacity-50"/>
+                                        </div>
+                                        <p>Chọn một bàn để xem chi tiết</p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
 
@@ -562,7 +569,7 @@
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                         <div>
                             <h2 className="text-xl font-bold text-white">Quản lý Kho & Menu</h2>
-                            <div className="flex gap-2 mt-2">
+                            <div className="flex gap-2 mt-2 flex-wrap">
                                 {[
                                     {id: 'all', label: 'Tất cả'},
                                     {id: 'spirits', label: 'Rượu mạnh'},
@@ -598,7 +605,7 @@
 
                     <Card className="overflow-hidden p-0">
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left">
+                            <table className="w-full text-left min-w-[600px]">
                                 <thead className="bg-slate-900/50 text-slate-400 text-xs uppercase font-bold">
                                     <tr>
                                         <th className="p-4">Tên hàng hóa</th>
@@ -628,7 +635,7 @@
                                                 />
                                             </td>
                                             <td className="p-4 text-right">
-                                                <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div className="flex justify-end gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
                                                     {item.status !== 'good' && (
                                                         <button onClick={() => setGlobalToast(`Đã gửi yêu cầu nhập ${item.name}`)} className="p-1 bg-purple-600 text-white rounded hover:bg-purple-500 text-xs px-2">Nhập</button>
                                                     )}
@@ -688,44 +695,46 @@
 
                     {viewMode === 'list' ? (
                         <Card className="p-0 overflow-hidden">
-                            <table className="w-full text-left">
-                                <thead className="bg-slate-900/50 text-slate-400 text-xs uppercase font-bold">
-                                    <tr>
-                                        <th className="p-4">Nhân viên</th>
-                                        <th className="p-4">Vai trò</th>
-                                        <th className="p-4">Check-in</th>
-                                        <th className="p-4">Trạng thái</th>
-                                        <th className="p-4 text-right">Doanh số</th>
-                                        <th className="p-4 text-right">Tip Riêng</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-700">
-                                    {STAFF_DATA.map((staff) => (
-                                        <tr key={staff.id} className="hover:bg-slate-700/30">
-                                            <td className="p-4 font-medium text-white flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300">
-                                                    {staff.name.charAt(0)}
-                                                </div>
-                                                {staff.name}
-                                            </td>
-                                            <td className="p-4 text-slate-400 text-sm">{staff.role}</td>
-                                            <td className="p-4 text-slate-300 font-mono text-sm">{staff.checkIn}</td>
-                                            <td className="p-4">
-                                                <Badge 
-                                                    type={staff.status} 
-                                                    text={staff.status === 'online' ? 'Đang làm' : staff.status === 'busy' ? 'Đang bận' : 'Đã về'} 
-                                                />
-                                            </td>
-                                            <td className="p-4 text-right font-bold text-purple-400">
-                                                {formatCurrency(staff.sales)}
-                                            </td>
-                                            <td className="p-4 text-right font-medium text-green-400">
-                                                {formatCurrency(staff.tips)}
-                                            </td>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left min-w-[600px]">
+                                    <thead className="bg-slate-900/50 text-slate-400 text-xs uppercase font-bold">
+                                        <tr>
+                                            <th className="p-4">Nhân viên</th>
+                                            <th className="p-4">Vai trò</th>
+                                            <th className="p-4">Check-in</th>
+                                            <th className="p-4">Trạng thái</th>
+                                            <th className="p-4 text-right">Doanh số</th>
+                                            <th className="p-4 text-right">Tip Riêng</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-700">
+                                        {STAFF_DATA.map((staff) => (
+                                            <tr key={staff.id} className="hover:bg-slate-700/30">
+                                                <td className="p-4 font-medium text-white flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300">
+                                                        {staff.name.charAt(0)}
+                                                    </div>
+                                                    {staff.name}
+                                                </td>
+                                                <td className="p-4 text-slate-400 text-sm">{staff.role}</td>
+                                                <td className="p-4 text-slate-300 font-mono text-sm">{staff.checkIn}</td>
+                                                <td className="p-4">
+                                                    <Badge 
+                                                        type={staff.status} 
+                                                        text={staff.status === 'online' ? 'Đang làm' : staff.status === 'busy' ? 'Đang bận' : 'Đã về'} 
+                                                    />
+                                                </td>
+                                                <td className="p-4 text-right font-bold text-purple-400">
+                                                    {formatCurrency(staff.sales)}
+                                                </td>
+                                                <td className="p-4 text-right font-medium text-green-400">
+                                                    {formatCurrency(staff.tips)}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </Card>
                     ) : (
                         <Card className="flex flex-col items-center justify-center py-12 text-center border-dashed">
@@ -826,6 +835,7 @@
             const [currentTime, setCurrentTime] = useState(new Date());
             const [showNotifications, setShowNotifications] = useState(false);
             const [showUserMenu, setShowUserMenu] = useState(false);
+            const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Mobile Menu State
             const [musicVol, setMusicVol] = useState(65);
             const [lightLevel, setLightLevel] = useState(40);
             const [toastMsg, setToastMsg] = useState('');
@@ -861,14 +871,27 @@
                 <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-purple-500 selection:text-white flex flex-col md:flex-row">
                     <Toast message={toastMsg} show={!!toastMsg} onClose={() => setToastMsg('')} />
 
-                    <aside className="fixed left-0 top-0 h-full w-64 bg-slate-900 border-r border-slate-800 z-30 hidden md:flex flex-col shadow-2xl">
-                        <div className="p-6 flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-purple-900/20">
-                                <GlassWater className="text-white" size={24} />
+                    {/* Mobile Overlay */}
+                    {isMobileMenuOpen && (
+                        <div 
+                            className="fixed inset-0 bg-black/50 z-30 md:hidden backdrop-blur-sm transition-opacity"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        />
+                    )}
+
+                    <aside className={`fixed left-0 top-0 h-full w-64 bg-slate-900 border-r border-slate-800 z-40 flex flex-col shadow-2xl transition-transform duration-300 ease-in-out transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+                        <div className="p-6 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-purple-900/20">
+                                    <GlassWater className="text-white" size={24} />
+                                </div>
+                                <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 tracking-wider">
+                                    TITAN CLUB
+                                </span>
                             </div>
-                            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 tracking-wider">
-                                TITAN CLUB
-                            </span>
+                            <button onClick={() => setIsMobileMenuOpen(false)} className="md:hidden text-slate-400 hover:text-white">
+                                <XCircle size={24} />
+                            </button>
                         </div>
 
                         <nav className="flex-1 px-4 space-y-2 mt-4">
@@ -881,7 +904,7 @@
                             ].map((item) => (
                                 <button
                                     key={item.id}
-                                    onClick={() => setActiveTab(item.id)}
+                                    onClick={() => { setActiveTab(item.id); setIsMobileMenuOpen(false); }}
                                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
                                         activeTab === item.id 
                                             ? 'bg-purple-600/20 text-purple-400 border border-purple-600/30' 
@@ -943,20 +966,24 @@
                     <main className="md:ml-64 flex-1 min-h-screen flex flex-col relative">
                         <header className="sticky top-0 z-20 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 px-6 py-4 flex justify-between items-center">
                             <div className="flex items-center gap-4">
-                                <button className="md:hidden p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors">
+                                <button 
+                                    className="md:hidden p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
+                                    onClick={() => setIsMobileMenuOpen(true)}
+                                >
                                     <Menu size={24} />
                                 </button>
                                 <div>
-                                    <h1 className="text-2xl font-bold text-white tracking-tight">
-                                        {activeTab === 'dashboard' && 'Dashboard Tổng Quan'}
-                                        {activeTab === 'tables' && 'Quản lý Bàn & Booking'}
+                                    <h1 className="text-lg md:text-2xl font-bold text-white tracking-tight">
+                                        {activeTab === 'dashboard' && 'Tổng Quan'}
+                                        {activeTab === 'tables' && 'Quản lý Bàn'}
                                         {activeTab === 'inventory' && 'Kho & Hàng Hóa'}
-                                        {activeTab === 'finance' && 'Báo Cáo Tài Chính'}
-                                        {activeTab === 'staff' && 'Quản Lý Nhân Sự'}
+                                        {activeTab === 'finance' && 'Tài Chính'}
+                                        {activeTab === 'staff' && 'Nhân Sự'}
                                     </h1>
-                                    <p className="text-sm text-slate-400 flex items-center gap-2">
+                                    <p className="text-xs md:text-sm text-slate-400 flex items-center gap-2">
                                         <Clock size={14} className="text-purple-400" />
-                                        {currentTime.toLocaleTimeString('vi-VN')} • {currentTime.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                        {currentTime.toLocaleTimeString('vi-VN')}
+                                        <span className="hidden md:inline">• {currentTime.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
                                     </p>
                                 </div>
                             </div>
